@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
+mod handlers;
 
 
 #[actix_web::main]

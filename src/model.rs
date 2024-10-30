@@ -1,7 +1,11 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use actix_web::HttpResponse;
+use actix_web::{
+    HttpResponse,
+    web,
+};
 use serde::{Deserialize, Serialize};
+use mongodb::Client;
 
 pub type CredentialWitness = [u8; 8];
 pub type Nonce = [u8; 32];
@@ -24,7 +28,7 @@ impl<T: Hash + Default> Address<T> {
     pub fn get_nonce(self: &Self) -> Nonce {
         self.nonce
     }
-    pub fn authenticate(credentials: Credentials<T>) -> Result<Self, HttpResponse> {
+    pub fn authenticate(client: web::Data<Client>, credentials: Credentials<T>) -> Result<Self, HttpResponse> {
         let mut hasher = DefaultHasher::new();
         credentials.xpub.hash(&mut hasher);
         credentials.nonce.hash(&mut hasher);
@@ -42,6 +46,5 @@ impl<T: Hash + Default> Address<T> {
                 xpub_list: Vec::new(),
             })
         }
-
     }
 }

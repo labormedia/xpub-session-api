@@ -1,12 +1,14 @@
 use actix_session::{storage::RedisSessionStore, Session, SessionMiddleware};
 use actix_web::{
-    cookie::{Key, SameSite},
+    cookie::{Cookie, Key, SameSite},
     error::InternalError,
     middleware, web, App, Error, HttpResponse, HttpServer, Responder,
 };
 use serde::{Deserialize, Serialize};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
+
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -18,11 +20,26 @@ async fn main() -> std::io::Result<()> {
         )
         .init();
     
+    let sessions_key = Key::generate();
+
+    let storage = RedisSessionStore::new("redis://127.0.0.1:6379").await.expect("Redis configuration");
+    
     tracing::info!("starting HTTP server at http://localhost:8080");
     HttpServer::new(move || {
         App::new()
+            // Logger
             .wrap(middleware::Logger::default())
+            // Hello World (will be the general api information page)
             .route("/hello", web::get().to(hello))
+            // cookie session
+            .wrap(
+                SessionMiddleware::builder(storage.clone(), sessions_key.clone())
+                    // allow the cookie to be accessed from javascript
+                    .cookie_http_only(false)
+                    // allow the cookie only from the current domain
+                    .cookie_same_site(SameSite::Strict)
+                    .build(),
+            )
     })
     .bind(("127.0.0.1", 8080))?
     .run()

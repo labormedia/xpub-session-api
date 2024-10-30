@@ -1939,6 +1939,7 @@ version = "0.1.0"
 dependencies = [
  "actix-session",
  "actix-web",
+ "rand",
  "serde",
  "tracing",
  "tracing-subscriber",

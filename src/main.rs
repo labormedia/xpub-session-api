@@ -7,6 +7,7 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
+use mongodb::Client;
 
 mod handlers;
 pub mod model;
@@ -25,7 +26,10 @@ async fn main() -> std::io::Result<()> {
     
     let sessions_key = Key::generate();
 
-    let storage = RedisSessionStore::new(REDIS_ADDRESS).await.expect("Redis configuration");
+    let session_storage = RedisSessionStore::new(REDIS_ADDRESS).await.expect("Redis configuration");
+
+    let mongodb_uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
+    let mongodb_client = Client::with_uri_str(mongodb_uri).await.expect("failed to connect");
     
     tracing::info!("starting HTTP server at http://localhost:8080");
     HttpServer::new(move || {
@@ -33,17 +37,17 @@ async fn main() -> std::io::Result<()> {
             // Logger
             .wrap(middleware::Logger::default())
             // Hello World (will be the general api information page)
-            .route("/hello", web::get().to(handlers::hello))
+            .service(handlers::hello)
             // cookie session
             .wrap(
-                SessionMiddleware::builder(storage.clone(), sessions_key.clone())
+                SessionMiddleware::builder(session_storage.clone(), sessions_key.clone())
                     // allow the cookie to be accessed from javascript
                     .cookie_http_only(false)
                     // allow the cookie only from the current domain
                     .cookie_same_site(SameSite::Strict)
                     .build(),
             )
-            .route("/login", web::post().to(handlers::login))
+            .service(handlers::login)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

@@ -33,7 +33,7 @@ impl<T: Hash + Default> Address<T> {
         if u64::from_be_bytes(credentials.witness) != hasher.finish() {
             Err(HttpResponse::Unauthorized().json("Unauthorized"))
         } else {
-            // Default user for now. 
+            // Default address for now. 
             // TODO: access address from persistent storage.
             // TODO: update persistent nonce for this address.
             Ok( Address {

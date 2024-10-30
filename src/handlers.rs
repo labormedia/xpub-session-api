@@ -4,6 +4,8 @@ use std::hash::{
 };
 use actix_web::{
     web,
+    get,
+    post,
     Responder,
     Error,
     error::InternalError,
@@ -12,13 +14,20 @@ use actix_session::storage::RedisSessionStore;
 use actix_session::Session;
 use bitcoin::bip32::Xpub;
 
+use mongodb::{bson::doc, options::IndexOptions, Client, Collection, IndexModel};
+
 use crate::model;
 
+const DB_NAME: &str = "xpub-session-api";
+const COLL_NAME: &str = "addresses";
+
+#[get("/hello")]
 // This will be the general information page for this API.
 pub async fn hello() -> Result<impl Responder, Error> {
     Ok("World!")
 }
 
+#[post("/login")]
 /// Login handler
 pub async fn login(
     credentials: web::Json<model::Credentials<model::CredentialWitness>>,

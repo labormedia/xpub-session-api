@@ -9,7 +9,9 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 mod handlers;
+pub mod model;
 
+const REDIS_ADDRESS: &str = "redis://127.0.0.1:6379";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -23,7 +25,7 @@ async fn main() -> std::io::Result<()> {
     
     let sessions_key = Key::generate();
 
-    let storage = RedisSessionStore::new("redis://127.0.0.1:6379").await.expect("Redis configuration");
+    let storage = RedisSessionStore::new(REDIS_ADDRESS).await.expect("Redis configuration");
     
     tracing::info!("starting HTTP server at http://localhost:8080");
     HttpServer::new(move || {

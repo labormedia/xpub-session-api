@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix-session = { version = "0.10.1", features = ["redis-session-native-tls"] }
+actix-web = "4.9.0"
+serde = "1.0.214"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

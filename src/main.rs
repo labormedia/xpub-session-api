@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
             // Logger
             .wrap(middleware::Logger::default())
             // Hello World (will be the general api information page)
-            .route("/hello", web::get().to(hello))
+            .route("/hello", web::get().to(handlers::hello))
             // cookie session
             .wrap(
                 SessionMiddleware::builder(storage.clone(), sessions_key.clone())
@@ -41,12 +41,9 @@ async fn main() -> std::io::Result<()> {
                     .cookie_same_site(SameSite::Strict)
                     .build(),
             )
+            .route("/login", web::post().to(handlers::login))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
-}
-
-async fn hello() -> Result<impl Responder, Error> {
-    Ok("World!")
 }

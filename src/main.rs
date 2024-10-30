@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
     tracing::info!("starting HTTP server at http://localhost:8080");
     HttpServer::new(move || {
         App::new()
+            .wrap(middleware::Logger::default())
             .route("/hello", web::get().to(hello))
     })
     .bind(("127.0.0.1", 8080))?

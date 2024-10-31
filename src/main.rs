@@ -30,6 +30,9 @@ async fn main() -> std::io::Result<()> {
 
     let mongodb_uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
     let mongodb_client = Client::with_uri_str(mongodb_uri).await.expect("failed to connect");
+
+    tracing::info!("Indexing DB");
+    let _ = handlers::create_address_index(&mongodb_client).await;
     
     tracing::info!("starting HTTP server at http://localhost:8080");
     HttpServer::new(move || {

@@ -33,10 +33,20 @@ fn main() {
     println!("Child Xpriv: {:?}", child);
 
     let xpub = Xpub::from_priv(&secp, &child);
-    //println!("Xpub from child Xpriv: {:?}", xpub);
+    println!("Xpub from child Xpriv: {:?}", xpub);
 
-    let zero = ChildNumber::from_normal_idx(0).unwrap();
-    let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
+    let child_number = [0,6].map(|x| ChildNumber::from_normal_idx(x).unwrap());
+    let public_key = xpub.derive_pub(&secp, &child_number).unwrap().public_key;
+    let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
+    println!("Receiving address at m/0/6: {}", address);
+
+    let child_number = [0,0].map(|x| ChildNumber::from_normal_idx(x).unwrap());
+    let public_key = xpub.derive_pub(&secp, &child_number).unwrap().public_key;
     let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
     println!("Receiving address at m/0/0: {}", address);
+
+    let child_number = [0,6].map(|x| ChildNumber::from_normal_idx(x).unwrap());
+    let public_key = xpub.derive_pub(&secp, &child_number).unwrap().public_key;
+    let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
+    println!("Receiving address at m/0/6: {}", address);
 }

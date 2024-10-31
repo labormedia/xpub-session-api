@@ -46,7 +46,7 @@ pub async fn login(
 }
 
 // Make addresses persistent references unique.
-async fn create_address_index(client: &Client) -> Result<(), mongodb::error::Error>{
+pub async fn create_address_index(client: &Client) -> Result<(), mongodb::error::Error>{
     let options = IndexOptions::builder().unique(true).build();
     let model = IndexModel::builder()
         .keys(doc!{

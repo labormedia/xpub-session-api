@@ -120,7 +120,7 @@ impl Address<XpubWrapper> {
                         Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
                     }
                 },
-                Ok(None) => Err(HttpResponse::Unauthorized().json("Unauthorized")),
+                Ok(None) => Err(HttpResponse::NotFound().json("NotFound")),
                 Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
             }
         }

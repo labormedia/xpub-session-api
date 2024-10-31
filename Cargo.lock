@@ -2876,6 +2876,7 @@ dependencies = [
  "mongodb",
  "rand",
  "serde",
+ "serde_bytes",
  "tracing",
  "tracing-subscriber",
 ]

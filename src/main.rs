@@ -47,6 +47,7 @@ async fn main() -> std::io::Result<()> {
                     .cookie_same_site(SameSite::Strict)
                     .build(),
             )
+            .app_data(web::Data::new(mongodb_client.clone()))
             .service(handlers::login)
     })
     .bind(("127.0.0.1", 8080))?

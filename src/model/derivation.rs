@@ -13,10 +13,14 @@ use bitcoin::{
     KnownHrp,
     sign_message::{
         MessageSignature,
+        MessageSignatureError,
         signed_msg_hash,
     },
 };
-use bitcoin_hashes::Hash;
+use bitcoin_hashes::{
+    Hash,
+    sha256d::Hash as Sha256dHash,
+};
 
 pub fn derive_xpub(init: bip32::Xpub, path: &[u32; 2]) -> bip32::Xpub {
     let mut buf: Vec<AlignedType> = Vec::new();
@@ -51,8 +55,17 @@ pub fn sign<C: secp256k1::Signing>(
     msg: &str,
     privkey: secp256k1::SecretKey,
 ) -> MessageSignature {
-    let msg_hash = signed_msg_hash(msg);
+    let msg_hash: Sha256dHash = signed_msg_hash(msg);
     let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
     let secp_sig = secp_ctx.sign_ecdsa_recoverable(&msg_to_sign, &privkey);
     MessageSignature { signature: secp_sig, compressed: true }
+}
+
+pub fn verify<C: secp256k1::Signing + secp256k1::Verification>(
+    secp: &secp256k1::Secp256k1<C>, 
+    address: Address, 
+    message_hash: Sha256dHash, 
+    signature: MessageSignature
+) -> Result<bool, MessageSignatureError> {
+    signature.is_signed_by_address(&secp, &address, message_hash)
 }

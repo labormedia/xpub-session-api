@@ -12,7 +12,8 @@ use mongodb::Client;
 mod handlers;
 pub mod model;
 
-const REDIS_ADDRESS: &str = "redis://127.0.0.1:6379";
+const REDIS_URI: &str = "redis://127.0.0.1:6379";
+const MONGODB_URI: &str = "mongodb://localhost:27017";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -26,9 +27,10 @@ async fn main() -> std::io::Result<()> {
     
     let sessions_key = Key::generate();
 
-    let session_storage = RedisSessionStore::new(REDIS_ADDRESS).await.expect("Redis configuration");
+    let redis_uri = std::env::var("REDIS_URI").unwrap_or_else(|_| REDIS_URI.into());
+    let session_storage = RedisSessionStore::new(redis_uri).await.expect("Redis configuration");
 
-    let mongodb_uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
+    let mongodb_uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| MONGODB_URI.into());
     let mongodb_client = Client::with_uri_str(mongodb_uri).await.expect("failed to connect");
 
     tracing::info!("Indexing DB");

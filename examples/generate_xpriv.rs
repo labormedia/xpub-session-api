@@ -43,10 +43,12 @@ fn main() {
     let child_number = [0,0].map(|x| ChildNumber::from_normal_idx(x).unwrap());
     let public_key = xpub.derive_pub(&secp, &child_number).unwrap().public_key;
     let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
+    println!("Public key at m/0/0: {}", public_key);
     println!("Receiving address at m/0/0: {}", address);
 
     let child_number = [0,6].map(|x| ChildNumber::from_normal_idx(x).unwrap());
     let public_key = xpub.derive_pub(&secp, &child_number).unwrap().public_key;
     let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
+    println!("Public key at m/0/0: {}", public_key);
     println!("Receiving address at m/0/6: {}", address);
 }

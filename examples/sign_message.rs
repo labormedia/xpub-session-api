@@ -79,3 +79,16 @@ fn random_signer<C: secp256k1::Signing + secp256k1::Verification>(
 
     (private_key, public_key)
 }
+
+fn key_pair_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
+    secp_ctx: &secp256k1::Secp256k1<C>, 
+    xpriv: &Xpriv,
+    path: &[u32; 2],
+) -> (SecretKey, PublicKey) {
+    let xpub = Xpub::from_priv(&secp_ctx, &xpriv);
+    let child_number = path.map(|x| ChildNumber::from_normal_idx(x).unwrap());
+    let public_key = xpub.derive_pub(&secp_ctx, &child_number).unwrap().public_key;
+    let private_key = xpriv.derive_priv(&secp_ctx, &child_number).unwrap().private_key;
+
+    (private_key, public_key)
+}

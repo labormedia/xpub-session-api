@@ -14,13 +14,13 @@ use mongodb::{
     },
 };
 use crate::{
-    model,
-        handlers::{
+    handlers::{
         DB_NAME,
         COLL_NAME,
     }
 };
 use bitcoin::bip32;
+mod derivation;
 
 
 pub type CredentialWitness = [u8; 8];
@@ -100,7 +100,7 @@ impl Address<XpubWrapper> {
             // TODO: access address from persistent storage.
             // TODO: update persistent nonce for this address.
 
-            let collection: Collection<model::Address<XpubWrapper>> = client.database(DB_NAME).collection(COLL_NAME);
+            let collection: Collection<Address<XpubWrapper>> = client.database(DB_NAME).collection(COLL_NAME);
 
             match collection.find_one(doc! {"xpub": &credentials.xpub}).await {
                 Ok(Some(address)) => {

@@ -114,17 +114,14 @@ impl Address<XpubWrapper> {
         self
     }
     pub async fn authenticate(client: web::Data<Client>, credentials: Credentials<XpubWrapper>) -> Result<Self, HttpResponse> {
-        println!("credentials xpub {:?}", credentials.xpub.clone().to_bytes());
         let credential_xpub: bip32::Xpub = credentials.xpub.clone().to_xpub();
         let public_key = credential_xpub.public_key;
         let mut message = credential_xpub.to_string().to_owned();
         message.push_str(&credentials.nonce.to_str());
-        println!("to sign A {}", message);
         let credential_signature: MessageSignature = match MessageSignature::from_slice(&credentials.witness.get_slice()) {
             Ok(signature) => signature,
             Err(err) => return Err(HttpResponse::Unauthorized().json("Unauthorized")),
         };
-        println!("Signature A {:?}", credential_signature);
         let is_signed = match derivation::verify(public_key, &message, credential_signature) {
             Ok(is_signed) => is_signed,
             Err(err) => return Err(HttpResponse::Unauthorized().json("Unauthorized")),

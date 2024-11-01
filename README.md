@@ -2,6 +2,10 @@
 
 This project has a strong focus on the security property of non-custodial addresses. This derives in a business logic that doesn't consider the manipulation of private keys directly, rather the verification and authentication via cryptographic signatures. In the case of multi-party management of funds, multi-signature schemes are provided by the Bitcoin standards considered for this implementation.
 
+# Architecture rationale
+
+BIP32 and BIP84 Bitcoin implementations in offline (co-processed) business logic for Bitcoin web3 apis opens the possibility of attesting interaction within multi-party BFT contexts of execution for financial services in a decentralized, deterministic and correct form. This includes the possibility of opening the space for permitionless web3 data management based on information publicly available on blockchains, like address associated UTXOs and multi-signature script logic with taproot.
+
 ## Run
 
 Initialize storage:

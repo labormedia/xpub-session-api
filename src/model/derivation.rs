@@ -16,6 +16,7 @@ use bitcoin::{
         MessageSignatureError,
         signed_msg_hash,
     },
+    NetworkKind,
 };
 use bitcoin_hashes::{
     Hash,
@@ -35,6 +36,13 @@ pub fn derive_xpub(init: bip32::Xpub, path: &[u32; 2]) -> bip32::Xpub {
 pub fn derive_address(init: bip32::Xpub, path: &[u32; 2]) -> Address {
     let public_key = derive_xpub(init, path).public_key;
     Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet)
+}
+
+pub fn xpub_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
+    secp_ctx: &secp256k1::Secp256k1<C>, 
+    xpriv: &Xpriv,
+) -> bip32::Xpub {
+    Xpub::from_priv(&secp_ctx, &xpriv)
 }
 
 pub fn key_pair_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
@@ -61,11 +69,33 @@ pub fn sign<C: secp256k1::Signing>(
     MessageSignature { signature: secp_sig, compressed: true }
 }
 
-pub fn verify<C: secp256k1::Signing + secp256k1::Verification>(
-    secp: &secp256k1::Secp256k1<C>, 
-    address: Address, 
-    message_hash: Sha256dHash, 
+pub fn sign_uncontextualized(
+    msg: &str,
+    privkey: secp256k1::SecretKey,
+) -> MessageSignature {
+
+    let mut buf: Vec<AlignedType> = Vec::new();
+    buf.resize(Secp256k1::preallocate_size(), AlignedType::zeroed());
+    let secp_ctx = Secp256k1::preallocated_new(buf.as_mut_slice()).unwrap();
+
+    let msg_hash: Sha256dHash = signed_msg_hash(msg);
+    let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
+    let secp_sig = secp_ctx.sign_ecdsa_recoverable(&msg_to_sign, &privkey);
+    MessageSignature { signature: secp_sig, compressed: true }
+}
+
+pub fn verify(
+    public_key: secp256k1::PublicKey, 
+    msg: &str, 
     signature: MessageSignature
 ) -> Result<bool, MessageSignatureError> {
+    let mut buf: Vec<AlignedType> = Vec::new();
+    buf.resize(Secp256k1::preallocate_size(), AlignedType::zeroed());
+    let secp = Secp256k1::preallocated_new(buf.as_mut_slice()).unwrap();
+
+    let message_hash: Sha256dHash = signed_msg_hash(msg);
+
+    let address = Address::p2pkh(&CompressedPublicKey(public_key), NetworkKind::Test);
+
     signature.is_signed_by_address(&secp, &address, message_hash)
 }

@@ -11,9 +11,11 @@ bitcoin_hashes = "0.14.0"
 mongodb = "3.1.0"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_bytes = "0.11.15"
+serde_json = "1.0.132"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [dev-dependencies]
+hex = "0.4.3"
 rand = "0.8.5"
 secp256k1 = "0.30.0"

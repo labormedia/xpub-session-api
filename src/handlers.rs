@@ -13,6 +13,7 @@ use actix_web::{
 use actix_session::storage::RedisSessionStore;
 use actix_session::Session;
 use bitcoin::bip32::Xpub;
+use serde_json;
 
 use mongodb::{bson::doc, options::IndexOptions, Client, Collection, IndexModel};
 
@@ -32,6 +33,7 @@ pub async fn hello() -> Result<impl Responder, Error> {
 pub async fn login(
     client: web::Data<Client>,
     credentials: web::Json<model::Credentials<model::XpubWrapper>>,
+    //credentials: web::Json<model::Dummy>,
     session: Session,
 ) -> Result<impl Responder, Error> {
     let credentials = credentials.into_inner();

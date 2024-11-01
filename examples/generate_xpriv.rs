@@ -34,6 +34,7 @@ fn main() {
 
     let xpub = Xpub::from_priv(&secp, &child);
     println!("Xpub from child Xpriv: {:?}", xpub);
+    println!("Xpub from child Xpriv: {:?}", xpub.encode());
 
     let child_number = [0,6].map(|x| ChildNumber::from_normal_idx(x).unwrap());
     let public_key = xpub.derive_pub(&secp, &child_number).unwrap().public_key;

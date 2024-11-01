@@ -10,7 +10,8 @@ use mongodb::{
     Collection,
     bson::{
         doc,
-        Bson
+        Bson,
+        to_document,
     },
 };
 use crate::{
@@ -19,14 +20,36 @@ use crate::{
         COLL_NAME,
     }
 };
-use bitcoin::bip32;
-mod derivation;
+use bitcoin::{
+    bip32,
+    secp256k1,
+    sign_message::{
+        MessageSignature,
+        signed_msg_hash,
+    },
+};
+pub mod derivation;
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CredentialWitness(
+    #[serde(with = "serde_bytes")]
+    [u8; 65]
+);
 
-pub type CredentialWitness = [u8; 8];
+impl CredentialWitness {
+    fn get_slice(self) -> [u8; 65] {
+        self.0
+    }
+}
 
-#[derive(Clone, Hash, Serialize, Deserialize)]
+#[derive(Clone, Hash, Serialize, Deserialize, Debug)]
 pub struct Nonce(u32);
+
+impl Nonce {
+    fn to_str(self) -> String {
+        self.0.to_string()
+    }
+}
 
 #[derive(Clone, Hash, Serialize, Deserialize)]
 pub struct XpubWrapper{
@@ -58,8 +81,7 @@ impl TryFrom<[u8; 78]> for XpubWrapper {
 
 impl Into<Bson> for XpubWrapper {
     fn into(self) -> Bson {
-        let mut bin = std::io::Cursor::new(self.to_bytes());
-        mongodb::bson::Bson::Document(mongodb::bson::Document::from_reader(&mut bin).expect("XpubWrapper value size is known."))
+        mongodb::bson::Bson::Document(to_document(&self).expect("Known size"))
     }
 }
 
@@ -70,11 +92,17 @@ pub struct Address<T: Hash> {
     xpub_list: Vec<T>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Credentials<T: Hash> {
     witness: CredentialWitness,
     xpub: T,
     nonce: Nonce,
+}
+
+impl<T: Hash> Credentials<T> {
+    pub fn get_nonce(self) -> Nonce {
+        self.nonce.clone()
+    }
 }
 
 impl Address<XpubWrapper> {
@@ -86,32 +114,41 @@ impl Address<XpubWrapper> {
         self
     }
     pub async fn authenticate(client: web::Data<Client>, credentials: Credentials<XpubWrapper>) -> Result<Self, HttpResponse> {
-        let mut hasher = DefaultHasher::new();
-        credentials.xpub.hash(&mut hasher);
-        credentials.nonce.hash(&mut hasher);
-        let credential_hash = hasher.finish();
-        let credential_witness = u64::from_be_bytes(credentials.witness);
+        println!("credentials xpub {:?}", credentials.xpub.clone().to_bytes());
+        let credential_xpub: bip32::Xpub = credentials.xpub.clone().to_xpub();
+        let public_key = credential_xpub.public_key;
+        let mut message = credential_xpub.to_string().to_owned();
+        message.push_str(&credentials.nonce.to_str());
+        println!("to sign A {}", message);
+        let credential_signature: MessageSignature = match MessageSignature::from_slice(&credentials.witness.get_slice()) {
+            Ok(signature) => signature,
+            Err(err) => return Err(HttpResponse::Unauthorized().json("Unauthorized")),
+        };
+        println!("Signature A {:?}", credential_signature);
+        let is_signed = match derivation::verify(public_key, &message, credential_signature) {
+            Ok(is_signed) => is_signed,
+            Err(err) => return Err(HttpResponse::Unauthorized().json("Unauthorized")),
+        };
 
-        // Nahive authorization. TODO: implement persistent storage.
-        if credential_witness != credential_hash {
+        if !is_signed {
             Err(HttpResponse::Unauthorized().json("Unauthorized"))
         } else {
-            // Default address for now. 
-            // TODO: access address from persistent storage.
             // TODO: update persistent nonce for this address.
 
             let collection: Collection<Address<XpubWrapper>> = client.database(DB_NAME).collection(COLL_NAME);
 
             match collection.find_one(doc! {"xpub": &credentials.xpub}).await {
                 Ok(Some(address)) => {
-                    let mut address_hasher = DefaultHasher::new();
-                    address.xpub.hash(&mut address_hasher);
-                    address.nonce.hash(&mut address_hasher);
+                    let address_xpub: bip32::Xpub = address.xpub.clone().to_xpub();
+                    let mut address_message = address_xpub.to_string().to_owned();
+                    address_message.push_str(&address.nonce.clone().to_str());
+                    println!("to sign B {}", address_message);
+                    let message_hash = signed_msg_hash(&address_message);
                     // Update nonce on persistent db
-                    let updated_address = address.clone().update_nonce();
+                    let updated_address = address.clone();// .update_nonce(); // TODO: Unleash the nonce updating procedure.
                     match collection.insert_one(updated_address.clone()).await {
                         Ok(_) => { 
-                            if credential_witness != address_hasher.finish() {
+                            if credential_xpub.encode() != address.xpub.to_bytes() {
                                 Err(HttpResponse::Unauthorized().json("Unauthorized"))
                             } else {
                                 Ok(updated_address)
@@ -125,4 +162,11 @@ impl Address<XpubWrapper> {
             }
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Dummy {
+    witness: String,
+    xpub: String,
+    nonce: String,
 }

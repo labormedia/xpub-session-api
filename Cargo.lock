@@ -2885,11 +2885,13 @@ dependencies = [
  "actix-web",
  "bitcoin",
  "bitcoin_hashes",
+ "hex",
  "mongodb",
  "rand",
  "secp256k1 0.30.0",
  "serde",
  "serde_bytes",
+ "serde_json",
  "tracing",
  "tracing-subscriber",
 ]

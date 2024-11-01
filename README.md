@@ -1,6 +1,6 @@
 # xpub-session-api
 
-
+This project has a strong focus on the security property of non-custodial addresses. This derives in a business logic that doesn't consider the manipulation of private keys directly, rather the verification and authentication via cryptographic signatures. In the case of multi-party management of funds, multi-signature schemes are provided by the Bitcoin standards considered for this implementation.
 
 ## Run
 

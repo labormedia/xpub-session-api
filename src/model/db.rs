@@ -1,7 +1,18 @@
 use super::*;
 
-// let _ = collection.insert_one(Address::from_credentials(credentials.clone())).await;
 // model::db::lookup(client, credentials).await
+
+pub async fn insert_address_from_credentials(collection: Collection<Address<XpubWrapper>>, credentials: Credentials<XpubWrapper>) -> Result<Address<XpubWrapper>, HttpResponse> {
+    let address = if Address::authenticate(credentials.clone()).await? {
+        Address::from_credentials(credentials.clone())
+    } else {
+        return Err(HttpResponse::Unauthorized().json("Unauthorized"))
+    };
+    match collection.insert_one(address.clone()).await {
+        Ok(_) => Ok(address),
+        Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
+    }
+}
 
 pub async fn address_lookup(client: web::Data<Client>, credentials: Credentials<XpubWrapper>) -> Result<Address<XpubWrapper>, HttpResponse> {
     let credential_xpub: bip32::Xpub = credentials.xpub.clone().to_xpub();

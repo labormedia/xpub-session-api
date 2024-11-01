@@ -9,6 +9,7 @@ use actix_web::{
     Responder,
     Error,
     error::InternalError,
+    HttpResponse,
 };
 use actix_session::storage::RedisSessionStore;
 use actix_session::Session;
@@ -33,17 +34,13 @@ pub async fn hello() -> Result<impl Responder, Error> {
 pub async fn login(
     client: web::Data<Client>,
     credentials: web::Json<model::Credentials<model::XpubWrapper>>,
-    //credentials: web::Json<model::Dummy>,
     session: Session,
 ) -> Result<impl Responder, Error> {
     let credentials = credentials.into_inner();
-
-    match model::Address::authenticate(client, credentials).await {
-        Ok(address) => {
-            session.insert("nonce", address.get_nonce()).unwrap();
-            Ok("Authorized")
-        },
-        Err(err) => return Err(InternalError::from_response("", err).into()),
+    match model::Address::authenticate(credentials).await {
+        Ok(false) => Ok("Unauthorized"),
+        Ok(true) => Ok("Authorized"),
+        Err(err) => Err(InternalError::from_response("", err).into()),
     }
 }
 

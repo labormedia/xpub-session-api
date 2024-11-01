@@ -29,6 +29,7 @@ use bitcoin::{
     },
 };
 pub mod derivation;
+pub mod db;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CredentialWitness(
@@ -106,6 +107,13 @@ impl<T: Hash> Credentials<T> {
 }
 
 impl Address<XpubWrapper> {
+    pub fn from_credentials(credentials: Credentials<XpubWrapper>) -> Self {
+        Address {
+            xpub: credentials.xpub,
+            nonce: credentials.nonce,
+            xpub_list: Vec::new(),
+        }
+    }
     pub fn get_nonce(self: &Self) -> Nonce {
         self.nonce.clone()
     }
@@ -113,50 +121,18 @@ impl Address<XpubWrapper> {
         self.nonce = Nonce(self.nonce.0 + 1);
         self
     }
-    pub async fn authenticate(client: web::Data<Client>, credentials: Credentials<XpubWrapper>) -> Result<Self, HttpResponse> {
+    pub async fn authenticate(credentials: Credentials<XpubWrapper>) -> Result<bool, HttpResponse> {
         let credential_xpub: bip32::Xpub = credentials.xpub.clone().to_xpub();
         let public_key = credential_xpub.public_key;
         let mut message = credential_xpub.to_string().to_owned();
-        message.push_str(&credentials.nonce.to_str());
-        let credential_signature: MessageSignature = match MessageSignature::from_slice(&credentials.witness.get_slice()) {
+        message.push_str(&credentials.clone().nonce.to_str());
+        let credential_signature: MessageSignature = match MessageSignature::from_slice(&credentials.clone().witness.get_slice()) {
             Ok(signature) => signature,
-            Err(err) => return Err(HttpResponse::Unauthorized().json("Unauthorized")),
+            Err(err) => return Ok(false),
         };
-        let is_signed = match derivation::verify(public_key, &message, credential_signature) {
-            Ok(is_signed) => is_signed,
-            Err(err) => return Err(HttpResponse::Unauthorized().json("Unauthorized")),
-        };
-
-        if !is_signed {
-            Err(HttpResponse::Unauthorized().json("Unauthorized"))
-        } else {
-            // TODO: update persistent nonce for this address.
-
-            let collection: Collection<Address<XpubWrapper>> = client.database(DB_NAME).collection(COLL_NAME);
-
-            match collection.find_one(doc! {"xpub": &credentials.xpub}).await {
-                Ok(Some(address)) => {
-                    let address_xpub: bip32::Xpub = address.xpub.clone().to_xpub();
-                    let mut address_message = address_xpub.to_string().to_owned();
-                    address_message.push_str(&address.nonce.clone().to_str());
-                    println!("to sign B {}", address_message);
-                    let message_hash = signed_msg_hash(&address_message);
-                    // Update nonce on persistent db
-                    let updated_address = address.clone();// .update_nonce(); // TODO: Unleash the nonce updating procedure.
-                    match collection.insert_one(updated_address.clone()).await {
-                        Ok(_) => { 
-                            if credential_xpub.encode() != address.xpub.to_bytes() {
-                                Err(HttpResponse::Unauthorized().json("Unauthorized"))
-                            } else {
-                                Ok(updated_address)
-                            }
-                         },
-                        Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
-                    }
-                },
-                Ok(None) => Err(HttpResponse::NotFound().json("NotFound")),
-                Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
-            }
+        match derivation::verify(public_key, &message, credential_signature) {
+            Ok(is_signed) => Ok(is_signed),
+            Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
         }
     }
 }

@@ -9,6 +9,5 @@ fn main() {
     let best_block_hash = rpc.get_best_block_hash().unwrap();
     println!("best block hash: {}", best_block_hash);
 
-    let balance = rpc.get_balance(None, None).unwrap();
-    println!("Balance: {:?} BTC", balance.to_btc());
+    
 }

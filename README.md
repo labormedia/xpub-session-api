@@ -45,7 +45,7 @@ cargo run --release --example sign_nonce -- [nonce]
 
 For example:
 ```console
-$cargo run --release --example sign_nonce -- 0
+$ cargo run --release --example sign_nonce -- 0
     Finished `release` profile [optimized] target(s) in 0.19s
      Running `target/release/examples/sign_nonce 0`
 nonce: "0"
@@ -58,6 +58,8 @@ Serialized signature [31, 16, 221, 78, 67, 151, 246, 235, 208, 214, 239, 190, 16
 is_signed true
 verify true
 ```
+
+In this example "Serialized signature" is the witness byte array and "Xpub slice" is the serialized Xpub byte array associated with the signature.
 
 ## Price Data Acquisition
 

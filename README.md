@@ -19,6 +19,10 @@ docker run -p 6379:6379 --name actix-redis -d redis
 cargo run --release
 ```
 
+## Partially Signed Bitcoin Transactions (PSBT)
+
+Module `model::psbt` includes the logic to create and sign PSBT transactions. This includes taproot path transactions.
+
 ## Test
 
 Requirement: Bitcoin Core (https://bitcoin.org/en/bitcoin-core/)

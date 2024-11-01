@@ -30,6 +30,7 @@ use bitcoin::{
 };
 pub mod derivation;
 pub mod db;
+pub mod psbt;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CredentialWitness(

@@ -1,9 +1,11 @@
 #!/bin/bash
+echo 'Shutting down previous instances'
 killall bitcoind
-bitcoind -regtest -daemon
+source ./tests/scripts/alias_source.sh
+sleep 5
+$btd
 sleep 5
 echo 'working dir '$(pwd)
-source ./tests/scripts/alias_source.sh
 echo 'Creating wallets'
-$bt -named createwallet wallet_name=benefactor blank=true
-$bt -named createwallet wallet_name=beneficiary blank=true
+$bt -named createwallet wallet_name=benefactor blank=true 
+$bt -named createwallet wallet_name=beneficiary blank=true 

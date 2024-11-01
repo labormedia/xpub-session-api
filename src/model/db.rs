@@ -1,5 +1,11 @@
 use super::*;
-
+use actix_web::{
+    Responder,
+    Error,
+    error::InternalError
+};
+use actix_session::Session;
+use crate::model;
 // model::db::lookup(client, credentials).await
 
 pub async fn insert_address_from_credentials(collection: Collection<Address<XpubWrapper>>, credentials: Credentials<XpubWrapper>) -> Result<Address<XpubWrapper>, HttpResponse> {
@@ -11,6 +17,26 @@ pub async fn insert_address_from_credentials(collection: Collection<Address<Xpub
     match collection.insert_one(address.clone()).await {
         Ok(_) => Ok(address),
         Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
+    }
+}
+
+pub async fn lookup_or_update_address(
+    client: web::Data<Client>,
+    session: Session,
+) -> Result<Address<XpubWrapper>, Error> {
+    match session.get::<model::Credentials<model::XpubWrapper>>("credentials")? {
+        Some(credential) => {
+            let internal_address = model::Address::from_credentials(credential.clone());
+            let address = match model::db::address_lookup(client, credential.clone()).await {
+                Ok(lookup_address) => lookup_address,
+                Err(err) => return Err(InternalError::from_response("", err).into())
+            };
+            if address != internal_address {
+                session.insert("credentials", address.clone()).unwrap();
+            }
+            Ok(address)
+        },
+        None => Err(InternalError::from_response("", HttpResponse::Unauthorized().json("Unauthorized")).into())
     }
 }
 

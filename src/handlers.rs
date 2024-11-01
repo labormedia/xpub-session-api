@@ -37,14 +37,30 @@ pub async fn login(
     session: Session,
 ) -> Result<impl Responder, Error> {
     let credentials = credentials.into_inner();
-    match model::Address::authenticate(credentials).await {
+    match model::Address::authenticate(credentials.clone()).await {
         Ok(false) => Ok("Unauthorized"),
-        Ok(true) => Ok("Authorized"),
+        Ok(true) => {
+            session.insert("credentials", credentials.clone()).unwrap();
+            Ok("Authorized")
+        },
         Err(err) => Err(InternalError::from_response("", err).into()),
     }
 }
 
-// Make addresses persistent references unique.
+
+#[get("/get_address")]
+pub async fn get_address(
+    client: web::Data<Client>,
+    session: Session,
+) -> Result<impl Responder, Error> {
+    match model::db::lookup_or_update_address(client, session).await {
+        Ok(address) => Ok(web::Json(address)),
+        Err(err) => Err(err)
+    }
+}
+
+
+// Make addresses' persistent references unique.
 pub async fn create_address_index(client: &Client) -> Result<(), mongodb::error::Error>{
     let options = IndexOptions::builder().unique(true).build();
     let model = IndexModel::builder()

@@ -43,7 +43,7 @@ impl CredentialWitness {
     }
 }
 
-#[derive(Clone, Hash, Serialize, Deserialize, Debug)]
+#[derive(Clone, Hash, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Nonce(u32);
 
 impl Nonce {
@@ -52,7 +52,7 @@ impl Nonce {
     }
 }
 
-#[derive(Clone, Hash, Serialize, Deserialize)]
+#[derive(Clone, Hash, Serialize, Deserialize, PartialEq)]
 pub struct XpubWrapper{
     #[serde(with = "serde_bytes")]
     bytes: [u8; 78],
@@ -86,7 +86,7 @@ impl Into<Bson> for XpubWrapper {
     }
 }
 
-#[derive(Clone, Hash, Serialize, Deserialize)]
+#[derive(Clone, Hash, Serialize, Deserialize, PartialEq)]
 pub struct Address<T: Hash> {
     xpub: T,
     nonce: Nonce,

@@ -54,6 +54,7 @@ async fn main() -> std::io::Result<()> {
             )
             .app_data(web::Data::new(mongodb_client.clone()))
             .service(handlers::login)
+            .service(handlers::get_address)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

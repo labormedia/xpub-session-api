@@ -36,3 +36,8 @@ Xpriv key generation is provided on screen in the example "generate_xpriv":
 ```console
 cargo run --release --example --example generate_xpriv
 ```
+
+## Price Data Acquisition
+
+For asset price acquisition please consider examples ws-to-grpc_server.rs and ws-to-grpc_client.rs of this project:
+[Scatter-Gather Examples](https://github.com/labormedia/scatter-gather/tree/main/examples)

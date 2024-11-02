@@ -1,3 +1,6 @@
+// Most of this code is inspired or copied from the main Rust Bitcoin Community project 'rust-bitcoin'
+// https://github.com/rust-bitcoin/
+
 use std::str::FromStr;
 use std::collections::BTreeMap;
 use bitcoin::{

@@ -45,7 +45,7 @@ Xpriv key generation is provided on screen in the example "generate_xpriv":
 cargo run --release --example --example generate_xpriv
 ```
 
-To create a valid Xpub address with it signed witness:
+To create a valid Xpub address with its signed witness:
 
 ```console
 cargo run --release --example sign_nonce -- [nonce]

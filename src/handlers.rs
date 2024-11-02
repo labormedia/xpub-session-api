@@ -59,6 +59,26 @@ pub async fn get_address(
     }
 }
 
+#[get("/derive_address/{first_path}/{second_path}")]
+pub async fn derive_address(
+    path: web::Path<(u32, u32)>,
+    client: web::Data<Client>,
+    session: Session,
+) -> Result<impl Responder, Error> {
+    let (first, second) = path.into_inner();
+    let derivation_path = [first, second];
+    match model::db::lookup_or_update_address(client.clone(), session).await {
+        Ok(address) => {
+            let mut new_address = address.clone();
+            let derived_xpub = model::derivation::derive_xpub(new_address.clone().get_xpub().to_xpub(), &derivation_path);
+            new_address.insert_xpub(derived_xpub.into());
+            model::db::insert_or_update_address(client, new_address.clone());
+            Ok(web::Json(new_address))
+        },
+        Err(err) => Err(err)
+    }
+}
+
 
 // Make addresses' persistent references unique.
 pub async fn create_address_index(client: &Client) -> Result<(), mongodb::error::Error>{
@@ -70,7 +90,7 @@ pub async fn create_address_index(client: &Client) -> Result<(), mongodb::error:
         .build();
     client
         .database(DB_NAME)
-        .collection::<model::Address<model::XpubWrapper>>(COLL_NAME)  // TODO: Change the type of Address<T> to Address<Xpub>
+        .collection::<model::Address<model::XpubWrapper>>(COLL_NAME)
         .create_index(model)
         .await?;
     Ok(())

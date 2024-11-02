@@ -60,11 +60,19 @@ pub struct XpubWrapper{
 }
 
 impl XpubWrapper {
-    fn to_bytes(self) -> [u8; 78] {
+    pub fn to_bytes(self) -> [u8; 78] {
         self.bytes
     }
-    fn to_xpub(self) -> bip32::Xpub {
+    pub fn to_xpub(self) -> bip32::Xpub {
         bip32::Xpub::decode(&self.to_bytes()).expect("Valid Xpub bytes")
+    }
+}
+
+impl From<bip32::Xpub> for XpubWrapper {
+    fn from(value: bip32::Xpub) -> Self {
+        XpubWrapper {
+            bytes: value.encode()
+        }
     }
 }
 
@@ -108,6 +116,12 @@ impl<T: Hash> Credentials<T> {
 }
 
 impl Address<XpubWrapper> {
+    pub fn get_xpub(self) -> XpubWrapper {
+        self.xpub
+    }
+    pub fn insert_xpub(&mut self, xpub: XpubWrapper) {
+        self.xpub_list.push(xpub);
+    }
     pub fn from_credentials(credentials: Credentials<XpubWrapper>) -> Self {
         Address {
             xpub: credentials.xpub,

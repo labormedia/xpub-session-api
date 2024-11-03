@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
             // Logger
             .wrap(middleware::Logger::default())
             // Hello World (will be the general api information page)
-            .service(handlers::hello)
+            .service(handlers::info)
             // cookie session
             .wrap(
                 SessionMiddleware::builder(session_storage.clone(), sessions_key.clone())

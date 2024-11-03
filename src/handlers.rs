@@ -18,10 +18,15 @@ use crate::model;
 pub const DB_NAME: &str = "xpub-session-api";
 pub const COLL_NAME: &str = "addresses";
 
-#[get("/hello")]
+#[get("/info")]
 // This will be the general information page for this API.
-pub async fn hello() -> Result<impl Responder, Error> {
-    Ok("World!")
+pub async fn info() -> Result<impl Responder, Error> {
+    Ok(r#"
+        Services:
+        /login
+        /derive_address/{first_index}/{second_index}
+        /get_address
+    "#)
 }
 
 #[post("/login")]

@@ -4,14 +4,13 @@
 use std::str::FromStr;
 use std::collections::BTreeMap;
 use bitcoin::{
-    consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, WPubkeyHash, Witness,
+    transaction, Address, Amount, Network, OutPoint, Psbt, ScriptBuf,
+    Sequence, Transaction, TxIn, TxOut, Witness,
     bip32::{
         self,
         Fingerprint,
     },
     locktime::absolute,
-    secp256k1,
     taproot::TaprootSpendInfo,
     psbt::{
         Input,
@@ -56,7 +55,7 @@ pub fn create_ecdsa_psbt(
     // Now we'll start the PSBT workflow.
     // Step 1: Creator role; that creates,
     // and add inputs and outputs to the PSBT.
-    let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).expect("could not create PSBT");
+    let psbt = Psbt::from_unsigned_tx(unsigned_tx).expect("could not create PSBT");
 }
 
 pub fn create_psbt_for_taproot_key_path_spend(

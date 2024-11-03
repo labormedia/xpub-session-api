@@ -42,7 +42,7 @@ pub fn xpub_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
     secp_ctx: &secp256k1::Secp256k1<C>, 
     xpriv: &Xpriv,
 ) -> bip32::Xpub {
-    Xpub::from_priv(&secp_ctx, &xpriv)
+    Xpub::from_priv(secp_ctx, xpriv)
 }
 
 pub fn key_pair_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
@@ -50,10 +50,10 @@ pub fn key_pair_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
     xpriv: &Xpriv,
     path: &[u32; 2],
 ) -> (secp256k1::SecretKey, secp256k1::PublicKey) {
-    let xpub = Xpub::from_priv(&secp_ctx, &xpriv);
+    let xpub = Xpub::from_priv(secp_ctx, xpriv);
     let child_number = path.map(|x| ChildNumber::from_normal_idx(x).unwrap());
-    let public_key = xpub.derive_pub(&secp_ctx, &child_number).unwrap().public_key;
-    let private_key = xpriv.derive_priv(&secp_ctx, &child_number).unwrap().private_key;
+    let public_key = xpub.derive_pub(secp_ctx, &child_number).unwrap().public_key;
+    let private_key = xpriv.derive_priv(secp_ctx, &child_number).unwrap().private_key;
 
     (private_key, public_key)
 }
@@ -95,7 +95,7 @@ pub fn verify(
 
     let message_hash: Sha256dHash = signed_msg_hash(msg);
 
-    let address = Address::p2pkh(&CompressedPublicKey(public_key), NetworkKind::Test);
+    let address = Address::p2pkh(CompressedPublicKey(public_key), NetworkKind::Test);
 
     signature.is_signed_by_address(&secp, &address, message_hash)
 }

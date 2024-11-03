@@ -1,6 +1,5 @@
 use super::*;
 use actix_web::{
-    Responder,
     Error,
     error::InternalError
 };

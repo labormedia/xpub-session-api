@@ -1,11 +1,10 @@
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::{Hash, Hasher};
 use actix_web::{
     HttpResponse,
     web,
 };
 use serde::{Deserialize, Serialize};
 use mongodb::{
-    Client,
     Collection,
     bson::{
         doc,
@@ -21,7 +20,6 @@ use crate::{
 };
 use bitcoin::{
     bip32,
-    secp256k1,
     sign_message::{
         MessageSignature,
         signed_msg_hash,
@@ -88,9 +86,9 @@ impl TryFrom<[u8; 78]> for XpubWrapper {
     }
 }
 
-impl Into<Bson> for XpubWrapper {
-    fn into(self) -> Bson {
-        mongodb::bson::Bson::Document(to_document(&self).expect("Known size"))
+impl From<XpubWrapper> for Bson {
+    fn from(val: XpubWrapper) -> Self {
+        mongodb::bson::Bson::Document(to_document(&val).expect("Known size"))
     }
 }
 
@@ -140,7 +138,7 @@ impl Address<XpubWrapper> {
             xpub_list: Vec::new(),
         }
     }
-    pub fn get_nonce(self: &Self) -> Nonce {
+    pub fn get_nonce(&self) -> Nonce {
         self.nonce.clone()
     }
     pub fn update_nonce(mut self) -> Self {

@@ -1,20 +1,17 @@
 use bitcoin::{
     Address,
     CompressedPublicKey,
-    KnownHrp,
     secp256k1::{
         self,
         SecretKey,
         PublicKey,
         Secp256k1,
         ffi::types::AlignedType,
-        Verification,
     },
     sign_message::{
         MessageSignature,
         signed_msg_hash,
     },
-    hashes::{sha256d, HashEngine},
     NetworkKind,
     bip32::{
         ChildNumber,
@@ -51,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?}", signature);
 
     //let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Testnets);
-    let address = Address::p2pkh(&CompressedPublicKey(public_key), NetworkKind::Test);
+    let address = Address::p2pkh(CompressedPublicKey(public_key), NetworkKind::Test);
 
     let is_signed = signature.is_signed_by_address(&secp, &address, message_hash)?;
     println!("is_signed {}", is_signed);
@@ -66,17 +63,17 @@ fn random_signer<C: secp256k1::Signing + secp256k1::Verification>(
     let seed = rand::thread_rng().gen::<[u8; 32]>();
     let root_test = Xpriv::new_master(NetworkKind::Test, &seed).unwrap();
     let path = "84h/0h/0h".parse::<DerivationPath>().unwrap();
-    let priv_child = root_test.derive_priv(&secp_ctx, &path).unwrap();
+    let priv_child = root_test.derive_priv(secp_ctx, &path).unwrap();
     
     // Private
     let secret_key = priv_child.private_key;
-    let xpub_child = Xpub::from_priv(&secp_ctx, &priv_child);
+    let xpub_child = Xpub::from_priv(secp_ctx, &priv_child);
 
     // Public
-    let xpub = Xpub::from_priv(&secp_ctx, &priv_child);
+    let xpub = Xpub::from_priv(secp_ctx, &priv_child);
     let child_number = [0,0].map(|x| ChildNumber::from_normal_idx(x).unwrap());
-    let public_key = xpub.derive_pub(&secp_ctx, &child_number).unwrap().public_key;
-    let private_key = priv_child.derive_priv(&secp_ctx, &child_number).unwrap().private_key;
+    let public_key = xpub.derive_pub(secp_ctx, &child_number).unwrap().public_key;
+    let private_key = priv_child.derive_priv(secp_ctx, &child_number).unwrap().private_key;
 
     (private_key, public_key)
 }

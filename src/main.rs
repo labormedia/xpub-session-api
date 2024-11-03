@@ -1,10 +1,8 @@
-use actix_session::{storage::RedisSessionStore, Session, SessionMiddleware};
+use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::{
-    cookie::{Cookie, Key, SameSite},
-    error::InternalError,
-    middleware, web, App, Error, HttpResponse, HttpServer, Responder,
+    cookie::{Key, SameSite},
+    middleware, web, App, HttpServer,
 };
-use serde::{Deserialize, Serialize};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use mongodb::Client;

@@ -1,7 +1,3 @@
-use std::hash::{
-    Hash,
-    Hasher
-};
 use actix_web::{
     web,
     get,
@@ -12,14 +8,10 @@ use actix_web::{
         InternalError,
         ErrorInsufficientStorage,
     },
-    HttpResponse,
 };
-use actix_session::storage::RedisSessionStore;
 use actix_session::Session;
-use bitcoin::bip32::Xpub;
-use serde_json;
 
-use mongodb::{bson::doc, options::IndexOptions, Client, Collection, IndexModel};
+use mongodb::{bson::doc, Client};
 
 use crate::model;
 

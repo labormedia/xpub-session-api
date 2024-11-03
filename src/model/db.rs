@@ -52,10 +52,6 @@ pub async fn address_lookup(
     let collection: Collection<Address<XpubWrapper>> = client.database(DB_NAME).collection(COLL_NAME);
             match collection.find_one(doc! {"xpub": &credentials.xpub}).await {
                 Ok(Some(address)) => {
-                    let address_xpub: bip32::Xpub = address.xpub.clone().to_xpub();
-                    let mut address_message = address_xpub.to_string().to_owned();
-                    address_message.push_str(&address.nonce.clone().to_str());
-                    let message_hash = signed_msg_hash(&address_message);
                     Ok(address)
                 },
                 Ok(None) => Err(HttpResponse::NotFound().json("NotFound")),

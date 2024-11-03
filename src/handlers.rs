@@ -71,7 +71,7 @@ pub async fn derive_address(
             }
             let mut new_address = address.clone();
             let derived_xpub = model::derivation::derive_xpub(&new_address.get_xpub(), &derivation_path);
-            new_address.insert_xpub(&derivation_path, derived_xpub.into());
+            new_address.insert_xpub(derived_xpub.into());
             match model::db::update_address(client, new_address.clone()).await {
                 Ok(updated_address) => Ok(web::Json(updated_address)),
                 Err(err) => Err(InternalError::from_response("", err).into()),

@@ -20,10 +20,7 @@ use crate::{
 };
 use bitcoin::{
     bip32,
-    sign_message::{
-        MessageSignature,
-        signed_msg_hash,
-    },
+    sign_message::MessageSignature,
 };
 pub mod derivation;
 pub mod db;
@@ -119,7 +116,7 @@ impl Address<XpubWrapper> {
     pub fn get_xpub(&self) -> bip32::Xpub {
         self.xpub.clone().to_xpub()
     }
-    pub fn insert_xpub(&mut self, derivation: &[u32; 2], xpub: XpubWrapper) {
+    pub fn insert_xpub(&mut self, xpub: XpubWrapper) {
         self.xpub_list.push(xpub);
     }
     pub fn get_xpub_list(self) -> Vec<XpubWrapper> {

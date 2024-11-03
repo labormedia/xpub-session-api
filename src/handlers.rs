@@ -8,7 +8,10 @@ use actix_web::{
     post,
     Responder,
     Error,
-    error::InternalError,
+    error::{
+        InternalError,
+        ErrorInsufficientStorage,
+    },
     HttpResponse,
 };
 use actix_session::storage::RedisSessionStore;
@@ -40,7 +43,7 @@ pub async fn login(
     match model::Address::authenticate(credentials.clone()).await {
         Ok(false) => Ok("Unauthorized"),
         Ok(true) => {
-            session.insert("credentials", credentials.clone()).unwrap();
+            session.insert("credentials", credentials.clone())?;
             Ok("Authorized")
         },
         Err(err) => Err(InternalError::from_response("", err).into()),
@@ -67,31 +70,22 @@ pub async fn derive_address(
 ) -> Result<impl Responder, Error> {
     let (first, second) = path.into_inner();
     let derivation_path = [first, second];
-    match model::db::lookup_or_update_address(client.clone(), session).await {
+    match model::db::lookup_or_update_address(client.clone(), session.clone()).await {
         Ok(address) => {
+            //Ok(web::Json(address.get_xpub_list()))
+            let size = address.get_xpub_list_ref().len();
+            if size > 255 {
+                return Err(ErrorInsufficientStorage(size))
+            }
             let mut new_address = address.clone();
-            let derived_xpub = model::derivation::derive_xpub(new_address.clone().get_xpub().to_xpub(), &derivation_path);
-            new_address.insert_xpub(derived_xpub.into());
-            model::db::insert_or_update_address(client, new_address.clone());
-            Ok(web::Json(new_address))
+            let derived_xpub = model::derivation::derive_xpub(&new_address.get_xpub(), &derivation_path);
+            new_address.insert_xpub(&derivation_path, derived_xpub.into());
+            match model::db::update_address(client, new_address.clone()).await {
+                Ok(updated_address) => Ok(web::Json(updated_address)),
+                Err(err) => Err(InternalError::from_response("", err).into()),
+            }
+            
         },
         Err(err) => Err(err)
     }
-}
-
-
-// Make addresses' persistent references unique.
-pub async fn create_address_index(client: &Client) -> Result<(), mongodb::error::Error>{
-    let options = IndexOptions::builder().unique(true).build();
-    let model = IndexModel::builder()
-        .keys(doc!{
-            "xpub": 1
-        })
-        .build();
-    client
-        .database(DB_NAME)
-        .collection::<model::Address<model::XpubWrapper>>(COLL_NAME)
-        .create_index(model)
-        .await?;
-    Ok(())
 }

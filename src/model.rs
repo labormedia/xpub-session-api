@@ -1,5 +1,4 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
-
 use actix_web::{
     HttpResponse,
     web,
@@ -95,11 +94,11 @@ impl Into<Bson> for XpubWrapper {
     }
 }
 
-#[derive(Clone, Hash, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Address<T: Hash> {
     xpub: T,
     nonce: Nonce,
-    xpub_list: Vec<T>,
+    xpub_list: Vec<XpubWrapper>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -116,11 +115,23 @@ impl<T: Hash> Credentials<T> {
 }
 
 impl Address<XpubWrapper> {
-    pub fn get_xpub(self) -> XpubWrapper {
+    pub fn get_xpubwrapper(self) -> XpubWrapper {
         self.xpub
     }
-    pub fn insert_xpub(&mut self, xpub: XpubWrapper) {
+    pub fn get_xpub(&self) -> bip32::Xpub {
+        self.xpub.clone().to_xpub()
+    }
+    pub fn insert_xpub(&mut self, derivation: &[u32; 2], xpub: XpubWrapper) {
         self.xpub_list.push(xpub);
+    }
+    pub fn get_xpub_list(self) -> Vec<XpubWrapper> {
+        self.xpub_list
+    }
+    pub fn get_xpub_list_ref(&self) -> &Vec<XpubWrapper> {
+        &self.xpub_list
+    }
+    pub fn update_xpub_list(mut self, list: Vec<XpubWrapper>) {
+        self.xpub_list = list;
     }
     pub fn from_credentials(credentials: Credentials<XpubWrapper>) -> Self {
         Address {

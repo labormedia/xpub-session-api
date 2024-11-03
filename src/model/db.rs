@@ -5,6 +5,11 @@ use actix_web::{
     error::InternalError
 };
 use actix_session::Session;
+use mongodb::{
+    Client,
+    IndexModel,
+    options::IndexOptions,
+};
 use crate::model;
 // model::db::lookup(client, credentials).await
 
@@ -34,9 +39,6 @@ pub async fn lookup_or_update_address(
                 Ok(lookup_address) => lookup_address,
                 Err(err) => return Err(InternalError::from_response("", err).into())
             };
-            if address != internal_address {
-                session.insert("credentials", address.clone()).unwrap();
-            }
             Ok(address)
         },
         None => Err(InternalError::from_response("", HttpResponse::Unauthorized().json("Unauthorized")).into())
@@ -62,12 +64,20 @@ pub async fn address_lookup(
             }
 }
 
-pub async fn insert_or_update_address(
+pub async fn update_address(
     client: web::Data<Client>, 
     updated_address: Address<XpubWrapper>
 ) -> Result<Address<XpubWrapper>, HttpResponse> {
     let collection: Collection<Address<XpubWrapper>> = client.database(DB_NAME).collection(COLL_NAME);
-    match collection.insert_one(updated_address.clone()).await {
+    let filter_doc = doc! { 
+        "xpub": updated_address.clone().get_xpubwrapper()
+    };
+    let update_doc = doc! { 
+        "$set": doc! { 
+            "xpub_list": updated_address.clone().get_xpub_list()
+        } 
+    };
+    match collection.update_one(filter_doc, update_doc).await {
         Ok(_) => Ok(updated_address),
         Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
     }
@@ -83,4 +93,20 @@ pub async fn update_address_nonce(
         Ok(_) => Ok(updated_address),
         Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
     }
+}
+
+// Make addresses' persistent references unique.
+pub async fn create_address_index(client: &Client) -> Result<(), mongodb::error::Error>{
+    let options = IndexOptions::builder().unique(true).build();
+    let model = IndexModel::builder()
+        .keys(doc!{
+            "xpub": 1
+        })
+        .build();
+    client
+        .database(DB_NAME)
+        .collection::<model::Address<model::XpubWrapper>>(COLL_NAME)
+        .create_index(model)
+        .await?;
+    Ok(())
 }

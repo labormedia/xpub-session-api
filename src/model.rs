@@ -149,7 +149,7 @@ impl Address<XpubWrapper> {
         message.push_str(&credentials.clone().nonce.to_str());
         let credential_signature: MessageSignature = match MessageSignature::from_slice(&credentials.clone().witness.get_slice()) {
             Ok(signature) => signature,
-            Err(err) => return Ok(false),
+            Err(err) => return Err(HttpResponse::InternalServerError().body(err.to_string())),
         };
         match derivation::verify(public_key, &message, credential_signature) {
             Ok(is_signed) => Ok(is_signed),

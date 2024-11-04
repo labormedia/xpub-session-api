@@ -38,6 +38,11 @@ impl CredentialWitness {
     }
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SaltedFingerPrint {
+    salted_fingerprint: String,
+}
+
 #[derive(Clone, Hash, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Nonce(u32);
 

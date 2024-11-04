@@ -86,3 +86,14 @@ pub async fn derive_address(
         Err(err) => Err(err)
     }
 }
+
+/// fn create_psbt builds a psbt from a list of Txin transaction inputs, the recipient's address, 
+/// the sender's public keys and the output and input amounts for the transation.
+#[post("/create_psbt")]
+pub async fn create_psbt(
+    client: web::Data<Client>,
+    auth_instance: web::Json<model::SaltedFingerPrint>,
+    session: Session,
+) -> Result<impl Responder, Error> {
+    Ok("todo")
+}

@@ -33,7 +33,7 @@ pub fn create_ecdsa_psbt(
     pk_change: PublicKey,
     spend_amount: Amount, 
     change_amount: Amount
-) {
+) -> Psbt {
     let secp = Secp256k1::new();
     // The spend output is locked to a key controlled by the receiver.
     let spend = TxOut { value: spend_amount, script_pubkey: out_address.script_pubkey() };
@@ -55,7 +55,7 @@ pub fn create_ecdsa_psbt(
     // Now we'll start the PSBT workflow.
     // Step 1: Creator role; that creates,
     // and add inputs and outputs to the PSBT.
-    let psbt = Psbt::from_unsigned_tx(unsigned_tx).expect("could not create PSBT");
+    Psbt::from_unsigned_tx(unsigned_tx).expect("could not create PSBT")
 }
 
 pub fn create_psbt_for_taproot_key_path_spend(

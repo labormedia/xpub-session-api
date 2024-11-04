@@ -157,10 +157,3 @@ impl Address<XpubWrapper> {
         }
     }
 }
-
-#[derive(Serialize, Deserialize)]
-pub struct Dummy {
-    witness: String,
-    xpub: String,
-    nonce: String,
-}

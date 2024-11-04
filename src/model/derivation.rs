@@ -45,6 +45,15 @@ pub fn xpub_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
     Xpub::from_priv(secp_ctx, xpriv)
 }
 
+pub fn public_key_from_xpub<C: secp256k1::Signing + secp256k1::Verification>(
+    secp_ctx: &secp256k1::Secp256k1<C>, 
+    xpub: bip32::Xpub, 
+    path: &[u32; 2]
+) -> secp256k1::PublicKey {
+    let child_number = path.map(|x| ChildNumber::from_normal_idx(x).unwrap());
+    xpub.derive_pub(secp_ctx, &child_number).unwrap().public_key
+}
+
 pub fn key_pair_from_xpriv<C: secp256k1::Signing + secp256k1::Verification>(
     secp_ctx: &secp256k1::Secp256k1<C>, 
     xpriv: &Xpriv,

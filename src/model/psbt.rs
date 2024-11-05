@@ -23,6 +23,7 @@ use bitcoin::{
         NetworkUnchecked,
         NetworkChecked,
     },
+    key::FromSliceError,
 };
 use serde::{
     Serialize,
@@ -30,15 +31,34 @@ use serde::{
 };
 
 #[derive(Serialize, Deserialize)]
-pub struct PsbtSerialized {
+pub struct AddressSerialized {
     address_string: String,
 }
 
-impl PsbtSerialized {
+impl AddressSerialized {
     pub fn to_address(self, network: Network) -> Result<Address<NetworkChecked>, ParseError> {
         Address::from_str(&self.address_string)?
             .require_network(network)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PublicKeySerialized {
+    publik_key_slice: Vec<u8>
+}
+
+impl PublicKeySerialized {
+    pub fn from_slice(data: &[u8]) -> Result<PublicKey, FromSliceError> {
+        PublicKey::from_slice(data)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PsbtSerialized {
+    out_address_serialized: AddressSerialized,
+    pk_change: PublicKeySerialized,
+    spend_amount: usize,
+    change_amount: usize,
 }
 
 pub fn btc_address_from_str(address_str: &str, network: Network) -> Address {

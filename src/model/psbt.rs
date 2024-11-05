@@ -48,7 +48,7 @@ pub struct PublicKeySerialized {
 }
 
 impl PublicKeySerialized {
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, FromSliceError> {
+    pub fn to_public_key(data: &[u8]) -> Result<PublicKey, FromSliceError> {
         PublicKey::from_slice(data)
     }
 }

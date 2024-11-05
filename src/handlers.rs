@@ -27,6 +27,7 @@ pub async fn info() -> Result<impl Responder, Error> {
         /login
         /derive_address/{first_index}/{second_index}
         /get_address
+        /create_psbt
     "#)
 }
 

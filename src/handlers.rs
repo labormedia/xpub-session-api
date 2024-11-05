@@ -95,7 +95,6 @@ pub async fn create_psbt(
     psbt_web: web::Json<model::psbt::PsbtSerialized>,
     session: Session,
 ) -> Result<impl Responder, Error> {
-    let psbt_serialized = psbt_web.into_inner();
     let credentials = match session.get("credentials")? {
         Some(credential) => credential,
         None => {
@@ -105,7 +104,8 @@ pub async fn create_psbt(
     match model::UserAddress::authenticate(credentials).await {
         Ok(false) => Err(ErrorUnauthorized("Unauthorized")),
         Ok(true) => {
-            Ok("Authorized")
+            let psbt = psbt_web.into_inner().try_into_psbt()?;
+            Ok(web::Json(psbt))
         },
         Err(err) => Err(InternalError::from_response("", err).into()),
     }

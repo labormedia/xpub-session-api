@@ -24,6 +24,10 @@ use bitcoin::{
         NetworkChecked,
     },
     key::FromSliceError,
+    consensus::{
+        Decodable,
+        Encodable,
+    },
 };
 use serde::{
     Serialize,
@@ -44,21 +48,33 @@ impl AddressSerialized {
 
 #[derive(Serialize, Deserialize)]
 pub struct PublicKeySerialized {
-    publik_key_slice: Vec<u8>
+    public_key_slice: Vec<u8>
 }
 
 impl PublicKeySerialized {
-    pub fn to_public_key(data: &[u8]) -> Result<PublicKey, FromSliceError> {
-        PublicKey::from_slice(data)
+    pub fn to_public_key(self, ) -> Result<PublicKey, FromSliceError> {
+        PublicKey::from_slice(&self.public_key_slice)
     }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct PsbtSerialized {
+    inputs: Vec<TxIn>,
     out_address_serialized: AddressSerialized,
-    pk_change: PublicKeySerialized,
-    spend_amount: usize,
-    change_amount: usize,
+    pk_change_serialized: PublicKeySerialized,
+    spend_amount_u64: u64,
+    change_amount_u64: u64,
+}
+
+impl PsbtSerialized {
+    pub fn try_into_psbt(self) -> Result<Psbt, Box<dyn std::error::Error>> {
+        let inputs = self.inputs;
+        let out_address = self.out_address_serialized.to_address(Network::Testnet)?;
+        let pk_change = self.pk_change_serialized.to_public_key()?;
+        let spend_amount = Amount::from_int_btc(self.spend_amount_u64);
+        let change_amount = Amount::from_int_btc(self.change_amount_u64);
+        Ok(create_ecdsa_psbt(inputs, out_address, pk_change, spend_amount, change_amount)?)
+    }
 }
 
 pub fn btc_address_from_str(address_str: &str, network: Network) -> Address {
@@ -74,7 +90,7 @@ pub fn create_ecdsa_psbt(
     pk_change: PublicKey,
     spend_amount: Amount, 
     change_amount: Amount
-) -> Psbt {
+) -> Result<Psbt, Box<dyn std::error::Error>> {
     let secp = Secp256k1::new();
     // The spend output is locked to a key controlled by the receiver.
     let spend = TxOut { value: spend_amount, script_pubkey: out_address.script_pubkey() };
@@ -82,7 +98,7 @@ pub fn create_ecdsa_psbt(
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: change_amount,
-        script_pubkey: ScriptBuf::new_p2wpkh(&pk_change.wpubkey_hash().expect("Valid PublicKey")), // Change comes back to us.
+        script_pubkey: ScriptBuf::new_p2wpkh(&pk_change.wpubkey_hash()?), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.
@@ -96,7 +112,7 @@ pub fn create_ecdsa_psbt(
     // Now we'll start the PSBT workflow.
     // Step 1: Creator role; that creates,
     // and add inputs and outputs to the PSBT.
-    Psbt::from_unsigned_tx(unsigned_tx).expect("could not create PSBT")
+    Ok(Psbt::from_unsigned_tx(unsigned_tx)?)
 }
 
 pub fn create_psbt_for_taproot_key_path_spend(

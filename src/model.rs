@@ -25,6 +25,7 @@ use bitcoin::{
 pub mod derivation;
 pub mod db;
 pub mod psbt;
+pub mod user;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CredentialWitness(
@@ -95,7 +96,7 @@ impl From<XpubWrapper> for Bson {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub struct Address<T: Hash> {
+pub struct UserAddress<T: Hash> {
     xpub: T,
     nonce: Nonce,
     xpub_list: Vec<XpubWrapper>,
@@ -114,7 +115,7 @@ impl<T: Hash> Credentials<T> {
     }
 }
 
-impl Address<XpubWrapper> {
+impl UserAddress<XpubWrapper> {
     pub fn get_xpubwrapper(self) -> XpubWrapper {
         self.xpub
     }
@@ -134,7 +135,7 @@ impl Address<XpubWrapper> {
         self.xpub_list = list;
     }
     pub fn from_credentials(credentials: Credentials<XpubWrapper>) -> Self {
-        Address {
+        UserAddress {
             xpub: credentials.xpub,
             nonce: credentials.nonce,
             xpub_list: Vec::new(),

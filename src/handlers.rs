@@ -37,7 +37,7 @@ pub async fn login(
     session: Session,
 ) -> Result<impl Responder, Error> {
     let credentials = credentials.into_inner();
-    match model::Address::authenticate(credentials.clone()).await {
+    match model::UserAddress::authenticate(credentials.clone()).await {
         Ok(false) => Ok("Unauthorized"),
         Ok(true) => {
             session.insert("credentials", credentials.clone())?;
@@ -92,8 +92,16 @@ pub async fn derive_address(
 #[post("/create_psbt")]
 pub async fn create_psbt(
     client: web::Data<Client>,
-    auth_instance: web::Json<model::SaltedFingerPrint>,
+    credentials: web::Json<model::Credentials<model::XpubWrapper>>,
     session: Session,
 ) -> Result<impl Responder, Error> {
-    Ok("todo")
+    let credentials = credentials.into_inner();
+    match model::UserAddress::authenticate(credentials.clone()).await {
+        Ok(false) => Ok("Unauthorized"),
+        Ok(true) => {
+            session.insert("credentials", credentials.clone())?;
+            Ok("Authorized")
+        },
+        Err(err) => Err(InternalError::from_response("", err).into()),
+    }
 }

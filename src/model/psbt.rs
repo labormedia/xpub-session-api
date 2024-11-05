@@ -18,7 +18,28 @@ use bitcoin::{
     },
     secp256k1::Secp256k1,
     key::PublicKey,
+    address::{
+        error::ParseError,
+        NetworkUnchecked,
+        NetworkChecked,
+    },
 };
+use serde::{
+    Serialize,
+    Deserialize,
+};
+
+#[derive(Serialize, Deserialize)]
+pub struct PsbtSerialized {
+    address_string: String,
+}
+
+impl PsbtSerialized {
+    pub fn to_address(self, network: Network) -> Result<Address<NetworkChecked>, ParseError> {
+        Address::from_str(&self.address_string)?
+            .require_network(network)
+    }
+}
 
 pub fn btc_address_from_str(address_str: &str, network: Network) -> Address {
     Address::from_str(address_str).expect("Valid address")

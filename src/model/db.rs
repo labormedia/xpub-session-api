@@ -16,13 +16,13 @@ pub async fn insert_address_from_credentials(
     collection: Collection<model::UserAddress<XpubWrapper>>, 
     credentials: Credentials<XpubWrapper>
 ) -> Result<model::UserAddress<XpubWrapper>, HttpResponse> {
-    let address = if model::UserAddress::authenticate(credentials.clone()).await? {
+    let user_address = if model::UserAddress::authenticate(credentials.clone()).await? {
         model::UserAddress::from_credentials(credentials.clone())
     } else {
         return Err(HttpResponse::Unauthorized().json("Unauthorized"))
     };
-    match collection.insert_one(address.clone()).await {
-        Ok(_) => Ok(address),
+    match collection.insert_one(user_address.clone()).await {
+        Ok(_) => Ok(user_address),
         Err(err) => Err(HttpResponse::InternalServerError().body(err.to_string())),
     }
 }
@@ -34,11 +34,11 @@ pub async fn lookup_or_update_address(
     match session.get::<model::Credentials<model::XpubWrapper>>("credentials")? {
         Some(credential) => {
             let internal_address = model::UserAddress::from_credentials(credential.clone());
-            let address = match model::db::address_lookup(client, credential.clone()).await {
+            let user_address = match model::db::address_lookup(client, credential.clone()).await {
                 Ok(lookup_address) => lookup_address,
                 Err(err) => return Err(InternalError::from_response("", err).into())
             };
-            Ok(address)
+            Ok(user_address)
         },
         None => Err(InternalError::from_response("", HttpResponse::Unauthorized().json("Unauthorized")).into())
     }

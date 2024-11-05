@@ -7,6 +7,7 @@ use actix_web::{
     error::{
         InternalError,
         ErrorInsufficientStorage,
+        ErrorUnauthorized,
     },
 };
 use actix_session::Session;
@@ -38,7 +39,7 @@ pub async fn login(
 ) -> Result<impl Responder, Error> {
     let credentials = credentials.into_inner();
     match model::UserAddress::authenticate(credentials.clone()).await {
-        Ok(false) => Ok("Unauthorized"),
+        Ok(false) => Err(ErrorUnauthorized("Unauthorized")),
         Ok(true) => {
             session.insert("credentials", credentials.clone())?;
             Ok("Authorized")
@@ -69,7 +70,6 @@ pub async fn derive_address(
     let derivation_path = [first, second];
     match model::db::lookup_or_update_address(client.clone(), session.clone()).await {
         Ok(address) => {
-            //Ok(web::Json(address.get_xpub_list()))
             let size = address.get_xpub_list_ref().len();
             if size > 255 {
                 return Err(ErrorInsufficientStorage(size))
@@ -92,14 +92,19 @@ pub async fn derive_address(
 #[post("/create_psbt")]
 pub async fn create_psbt(
     client: web::Data<Client>,
-    credentials: web::Json<model::Credentials<model::XpubWrapper>>,
+    psbt_web: web::Json<model::psbt::PsbtSerialized>,
     session: Session,
 ) -> Result<impl Responder, Error> {
-    let credentials = credentials.into_inner();
-    match model::UserAddress::authenticate(credentials.clone()).await {
-        Ok(false) => Ok("Unauthorized"),
+    let psbt_serialized = psbt_web.into_inner();
+    let credentials = match session.get("credentials")? {
+        Some(credential) => credential,
+        None => {
+            return Err(ErrorUnauthorized("Unauthorized"));
+        }
+    };
+    match model::UserAddress::authenticate(credentials).await {
+        Ok(false) => Err(ErrorUnauthorized("Unauthorized")),
         Ok(true) => {
-            session.insert("credentials", credentials.clone())?;
             Ok("Authorized")
         },
         Err(err) => Err(InternalError::from_response("", err).into()),

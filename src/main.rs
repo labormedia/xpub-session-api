@@ -54,6 +54,7 @@ async fn main() -> std::io::Result<()> {
             .service(handlers::login)
             .service(handlers::get_address)
             .service(handlers::derive_address)
+            .service(handlers::create_psbt)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

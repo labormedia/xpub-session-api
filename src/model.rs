@@ -13,10 +13,8 @@ use mongodb::{
     },
 };
 use crate::{
-    handlers::{
-        DB_NAME,
-        COLL_NAME,
-    }
+    DB_NAME,
+    COLL_NAME,
 };
 use bitcoin::{
     bip32,

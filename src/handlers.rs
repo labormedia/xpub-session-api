@@ -16,9 +16,6 @@ use mongodb::{bson::doc, Client};
 
 use crate::model;
 
-pub const DB_NAME: &str = "xpub-session-api";
-pub const COLL_NAME: &str = "addresses";
-
 #[get("/info")]
 // This will be the general information page for this API.
 pub async fn info() -> Result<impl Responder, Error> {
